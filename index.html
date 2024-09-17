@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Contract Interaction</title>
+    <script src="https://cdn.ethers.io/lib/ethers-5.3.umd.min.js" type="application/javascript"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 20px;
+            background-color: #000;
+            color: #fff;
+        }
+        h1, h2 {
+            color: #ff6600; /* Orange color for headings */
+            font-weight: bold;
+        }
+        button {
+            margin: 5px;
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #ff6600; /* Orange background for buttons */
+            color: #000;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #e65c00; /* Darker orange for hover effect */
+        }
+        input {
+            margin: 5px;
+            padding: 10px;
+            font-size: 16px;
+            border: 2px solid #ff6600; /* Orange border for input fields */
+            border-radius: 5px;
+            background-color: #222; /* Dark background for input fields */
+            color: #fff;
+        }
+        input::placeholder {
+            color: #aaa; /* Light grey placeholder text */
+        }
+        #contractInteraction {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #111; /* Darker background for contract interaction section */
+            border-radius: 10px;
+            border: 1px solid #ff6600; /* Orange border for the contract interaction section */
+        }
+        #numberOutput {
+            font-size: 18px;
+            font-weight: bold;
+            color: #ff6600; /* Orange color for output text */
+        }
+    </style>
+</head>
+<body>
+    <h1>Smart Contract Interaction</h1>
+    
+    <button id="connectButton">Connect MetaMask</button>
+    
+    <div id="contractInteraction" style="display: none;">
+        <h2>Interact with Contract</h2>
+        
+        <div>
+            <input type="number" id="inputNumber" placeholder="Enter a number" />
+            <button id="setButton">Set Number</button>
+        </div>
+        
+        <div>
+            <button id="getButton">Get Number</button>
+            <p id="numberOutput"></p>
+        </div>
+    </div>
+    
+    <script>
+        // Contract details
+        const contractAddress = '0xFfadce37dCf61E763F233767535E0CB79385733b';
+        const abi = [
+            {
+                "inputs": [
+                    {
+                        "internalType": "uint256",
+                        "name": "input",
+                        "type": "uint256"
+                    }
+                ],
+                "name": "setNum",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "num",
+                "outputs": [
+                    {
+                        "internalType": "uint256",
+                        "name": "",
+                        "type": "uint256"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            }
+        ];
+
+        // Initialize ethers.js
+        let provider;
+        let signer;
+        let contract;
+
+        document.getElementById('connectButton').addEventListener('click', async () => {
+            if (window.ethereum) {
+                provider = new ethers.providers.Web3Provider(window.ethereum);
+                try {
+                    await provider.send("eth_requestAccounts", []);
+                    signer = provider.getSigner();
+                    contract = new ethers.Contract(contractAddress, abi, signer);
+                    document.getElementById('contractInteraction').style.display = 'block';
+                } catch (error) {
+                    console.error("User denied account access");
+                }
+            } else {
+                alert("MetaMask is not installed. Please install it to use this dApp.");
+            }
+        });
+
+        document.getElementById('setButton').addEventListener('click', async () => {
+            const inputNumber = document.getElementById('inputNumber').value;
+            if (inputNumber === '') {
+                alert('Please enter a number.');
+                return;
+            }
+            try {
+                const tx = await contract.setNum(ethers.BigNumber.from(inputNumber));
+                await tx.wait();
+                alert('Number set successfully.');
+            } catch (error) {
+                console.error("Error setting number:", error);
+            }
+        });
+
+        document.getElementById('getButton').addEventListener('click', async () => {
+            try {
+                const number = await contract.num();
+                document.getElementById('numberOutput').textContent = `Current number: ${number.toString()}`;
+            } catch (error) {
+                console.error("Error getting number:", error);
+            }
+        });
+    </script>
+</body>
+</html>
